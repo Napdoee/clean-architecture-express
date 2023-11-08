@@ -1,14 +1,21 @@
 const express = require("express");
+const { checkSchema, validationResult } = require("express-validator");
 
 const {
   getAllUsers,
   createUser,
-  getUserByEmail,
   authLoginUser,
   authLogoutUser,
   generateUserToken
 } = require('./user.service');
-const { verifyToken } = require("../middleware/verifyToken");
+const {
+  userPostValidateSchema,
+  loginValidateSchema
+} = require('./user.validations');
+
+const verifyToken = require("../middleware/verifyToken");
+const validate = require("../middleware/validate");
+
 const { succesResponse, msgResponse } = require("../utils/sendResponse.js");
 const tryCatch = require("../utils/tryCatch");
 
@@ -21,18 +28,18 @@ router.get('/users', verifyToken, async (req, res) => {
 });
 
 router.post('/users',
+  validate(userPostValidateSchema),
   tryCatch(async (req, res) => {
     const newUserData = req.body;
 
     await createUser(newUserData);
 
-    return res.status(201).send(
-      msgResponse('create user success')
-    );
+    return res.sendStatus(201)
   })
 )
 
 router.post('/login',
+  validate(loginValidateSchema),
   tryCatch(async (req, res) => {
     const { email, password } = req.body;
 
@@ -56,13 +63,6 @@ router.get('/token',
     res.send(succesResponse({ accessToken: generateToken }))
   })
 );
-
-router.get('/cookie', (req, res) => {
-  let Cookies = JSON.stringify(req.cookies)
-
-  console.log({ Cookies });
-  return res.send({ Cookies });
-})
 
 router.delete('/logout',
   tryCatch(async (req, res) => {

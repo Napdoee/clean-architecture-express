@@ -20,27 +20,17 @@ const getAllUsers = async () => {
 
 const getUserById = async (userId) => {
   const user = await findUserById(userId);
-  if (!user) throw new AppError('User not found', 404);
-
-  return user;
-}
-
-const getUserByEmail = async (email) => {
-  const user = await findUserByEmail(email);
-  if (!user) throw new AppError('Email not found', 404);
+  if (!user) throw new AppError('user not found', 404);
 
   return user;
 }
 
 const createUser = async (newUserData) => {
-  if (newUserData.password !== newUserData.confPassword)
-    throw new AppError('Password and Confirm Password not match');
-
   const userName = await findUserByName(newUserData.name);
-  if (userName) throw new AppError('Name has to be unique');
+  if (userName) throw new AppError('name has to be unique');
 
   const userEmail = await findUserByEmail(newUserData.email);
-  if (userEmail) throw new AppError('Email has to be unique');
+  if (userEmail) throw new AppError('email has to be unique');
 
   const salt = await bcrypt.genSalt();
   const hashPassword = await bcrypt.hash(newUserData.password, salt);
@@ -51,10 +41,11 @@ const createUser = async (newUserData) => {
 }
 
 const authLoginUser = async (email, password) => {
-  const user = await getUserByEmail(email);
+  const user = await findUserByEmail(email)
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new AppError('Wrong Password');
+  await bcrypt.compare(password, user.password, (err, data) => {
+    if (err) throw new AppError('email or password doesn\'t match ', 404);
+  })
 
   const userId = user.id;
   const userName = user.name;
@@ -110,7 +101,6 @@ module.exports = {
   getAllUsers,
   getUserById,
   createUser,
-  getUserByEmail,
   authLoginUser,
   generateUserToken,
   authLogoutUser

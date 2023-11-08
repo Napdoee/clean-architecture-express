@@ -34,7 +34,9 @@ router.post('/users',
 
     await createUser(newUserData);
 
-    return res.sendStatus(201)
+    return res.status(201).send(
+      msgResponse('create user success')
+    );
   })
 )
 

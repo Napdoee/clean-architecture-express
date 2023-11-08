@@ -42,10 +42,10 @@ const createUser = async (newUserData) => {
 
 const authLoginUser = async (email, password) => {
   const user = await findUserByEmail(email)
+  if (!user) throw new AppError('email or password doesn\'t match ');
 
-  await bcrypt.compare(password, user.password, (err, data) => {
-    if (err) throw new AppError('email or password doesn\'t match ', 404);
-  })
+  const match = bcrypt.compare(password, user.password);
+  if (!match) throw new AppError('email or password doesn\'t match ');
 
   const userId = user.id;
   const userName = user.name;

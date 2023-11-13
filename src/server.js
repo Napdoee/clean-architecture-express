@@ -3,9 +3,6 @@ const dotenv = require("dotenv");
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-const userController = require("./user/user.controller");
-const errorHandler = require('./middleware/errorHandler');
-
 const app = express();
 
 dotenv.config();
@@ -22,11 +19,10 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
-app.use(userController);
+const routers = require('./router');
+app.use("/api/v1", routers);
+
+const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
-app.get('/', (req, res) => {
-  res.send('Welcome To API');
-});
-
-app.listen(port, () => console.log(`Server running at port http://localhost:${port}`));
+app.listen(port, () => console.log(`Server listening to port ${port}`));

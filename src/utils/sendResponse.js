@@ -1,4 +1,4 @@
-const msgResponse = (messsage) => ({
+const msgResponse = (message) => ({
   "status": "success",
   message,
 })

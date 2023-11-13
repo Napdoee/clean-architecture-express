@@ -44,7 +44,7 @@ const authLoginUser = async (email, password) => {
   const user = await findUserByEmail(email)
   if (!user) throw new AppError('email or password doesn\'t match ');
 
-  const match = bcrypt.compare(password, user.password);
+  const match = await bcrypt.compareSync(password, user.password);
   if (!match) throw new AppError('email or password doesn\'t match ');
 
   const userId = user.id;
@@ -76,11 +76,11 @@ const authLogoutUser = async (token) => {
 
 const generateUserToken = async (token) => {
   const user = await findUserByToken(token);
-  if (!user) return new AppError(null, 403);
+  if (!user) throw new AppError("token has expired/token not found", 403);
 
-  const verifyToken = await jwt.verify(token, process.env.REFRESH_TOKEN_SECRET,
+  return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET,
     (err, decoded) => {
-      if (err) return new AppError(null, 403);
+      if (err) throw new AppError(err.message, 403);
 
       const userId = user.id;
       const userName = user.name;
@@ -93,8 +93,6 @@ const generateUserToken = async (token) => {
       return accessToken;
     }
   );
-
-  return verifyToken;
 }
 
 module.exports = {

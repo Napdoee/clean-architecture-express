@@ -1,5 +1,5 @@
 const express = require("express");
-const { checkSchema, validationResult } = require("express-validator");
+const { checkSchema } = require("express-validator");
 
 const {
   getAllUsers,
@@ -16,7 +16,7 @@ const {
 const verifyToken = require("../middleware/verifyToken");
 const validate = require("../middleware/validate");
 
-const { succesResponse, msgResponse } = require("../utils/sendResponse.js");
+const { succesResponse, msgResponse } = require("../utils/sendResponse");
 const tryCatch = require("../utils/tryCatch");
 
 const router = express.Router();
@@ -27,7 +27,7 @@ router.get('/users', verifyToken, async (req, res) => {
   return res.send(succesResponse({ users }));
 });
 
-router.post('/users',
+router.post('/register',
   validate(userPostValidateSchema),
   tryCatch(async (req, res) => {
     const newUserData = req.body;

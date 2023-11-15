@@ -1,34 +1,24 @@
-const express = require("express");
-const { checkSchema } = require("express-validator");
+const { Router } = require("express");
+const router = Router();
 
 const {
-  getAllUsers,
   createUser,
   authLoginUser,
   authLogoutUser,
   generateUserToken
-} = require('./user.service');
+} = require('./auth.service');
 const {
-  userPostValidateSchema,
+  registerValidateSchema,
   loginValidateSchema
-} = require('./user.validations');
+} = require('./auth.validations');
 
-const verifyToken = require("../middleware/verifyToken");
 const validate = require("../middleware/validate");
 
 const { succesResponse, msgResponse } = require("../utils/sendResponse");
 const tryCatch = require("../utils/tryCatch");
 
-const router = express.Router();
-
-router.get('/users', verifyToken, async (req, res) => {
-  const users = await getAllUsers();
-
-  return res.send(succesResponse({ users }));
-});
-
 router.post('/register',
-  validate(userPostValidateSchema),
+  validate(registerValidateSchema),
   tryCatch(async (req, res) => {
     const newUserData = req.body;
 

@@ -7,25 +7,25 @@ const FILE_TYPE = {
   'image/jpeg': 'jpeg'
 }
 
-const storageFile = multer.diskStorage({
-  destination: function(req, file, cb) {
-    const isValidFormat = FILE_TYPE[file.mimetype];
-    let uploadError = new AppError('invalid image type');
+const storageFile = multer.memoryStorage()
 
-    if (isValidFormat) {
-      uploadError = null;
-    }
+const filterImageType = async (req, file, cb) => {
+  const isValidFormat = FILE_TYPE[file.mimetype];
+  let uploadError = new AppError('Image must be valid mime type');
 
-    cb(uploadError, 'public/image')
-  },
-  filename: function(req, file, cb) {
-    const extension = FILE_TYPE[file.mimetype];
-    const uniqueFileImage = 'image-' + Date.now() + '.' + extension;
+  if (!isValidFormat) {
+    cb(uploadError);
+  }
 
-    cb(null, uniqueFileImage)
+  cb(null, true);
+}
+
+const uploadOption = multer({
+  storage: storageFile,
+  fileFilter: filterImageType,
+  limits: {
+    fileSize: 10 * Math.pow(1024, 2)
   }
 })
-
-const uploadOption = multer({ storage: storageFile })
 
 module.exports = uploadOption;

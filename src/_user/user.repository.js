@@ -17,6 +17,11 @@ const findUserByToken = async (token) => {
   const user = await Users.findFirst({
     where: {
       refresh_token: token,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true
     }
   })
 
@@ -27,6 +32,13 @@ const findUserById = async (id) => {
   const user = await Users.findUnique({
     where: {
       id,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true
     }
   })
 
@@ -37,6 +49,12 @@ const findUserByEmail = async (email) => {
   const user = await Users.findFirst({
     where: {
       email,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      password: true
     }
   })
 
@@ -47,6 +65,9 @@ const findUserByName = async (name) => {
   const user = await Users.findFirst({
     where: {
       name,
+    },
+    select: {
+      name: true,
     }
   })
 
@@ -63,6 +84,14 @@ const insertUser = async (newUserData, password) => {
   })
 
   return user;
+}
+
+const deleteUser = async (id) => {
+  await Users.delete({
+    where: {
+      id
+    }
+  })
 }
 
 const updateToken = async (id, token) => {
@@ -83,5 +112,6 @@ module.exports = {
   findUserByEmail,
   findUserByName,
   insertUser,
+  deleteUser,
   updateToken
 }

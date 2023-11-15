@@ -11,15 +11,41 @@ const {
 } = require('./project.repository');
 const AppError = require('../utils/appError');
 
+const storeImage = (imageFile) => {
+  const extension = path.extname(imageFile.originalname);
+  const image = 'project-' + Date.now() + extension;
+  const buffer = imageFile.buffer
+  const filePath = path.join(__dirname, '../../storage/projects/');
+
+  fs.writeFileSync(filePath + image, buffer, (err) => {
+    if (err) throw new Error("an error occurred while upload image");
+  });
+
+  return image;
+}
+
+const removeImage = async (oldImageName) => {
+  const filePath = path.resolve("storage/projects", oldImageName);
+  if (filePath) {
+    fs.unlink(filePath, (err) => {
+      if (err) throw new Error("an error occurred while remove image");
+    })
+  } else {
+    throw new AppError("an error occrred, can not remove image.")
+  }
+}
+
 const getAllProject = async () => {
   const projects = await findAllProject();
 
   return projects;
 }
 
-const createProject = async (newProjectData, image) => {
+const createProject = async (newProjectData, imageFile) => {
   const title = await findProjectByTitle(newProjectData.title);
   if (title) throw new AppError('title has to be unique');
+
+  const image = storeImage(imageFile);
 
   const newProject = await insertProject(newProjectData, image);
 
@@ -33,28 +59,18 @@ const getProjectById = async (id) => {
   return project;
 }
 
-const updateProject = async (updateProjectData, id, image) => {
+const updateProject = async (updateProjectData, id, imageFile) => {
   const project = await getProjectById(id);
 
-  let imageName;
-  if (project.image) {
-    if (image === null) {
-      imageName = project.image;
-    } else {
-      const filePath = path.resolve("public/image", project.image);
-      if (filePath) {
-        fs.unlink(filePath, (err) => {
-          if (err) throw Error("an error occurred while updating image");
-        })
-      }
-
-      imageName = image;
-    }
+  let image;
+  if (!imageFile) {
+    image = project.image;
   } else {
-    imageName = image;
+    removeImage(project.image)
+    image = storeImage(imageFile);
   }
 
-  const updatedProject = await editProject(updateProjectData, id, imageName);
+  const updatedProject = await editProject(updateProjectData, id, image);
 
   return updatedProject;
 }
@@ -62,12 +78,7 @@ const updateProject = async (updateProjectData, id, image) => {
 const deleteProject = async (id) => {
   const project = await getProjectById(id);
 
-  const filePath = path.resolve("public/image", project.image);
-  if (filePath) {
-    fs.unlink(filePath, (err) => {
-      if (err) throw Error("an error occurred while updating image");
-    })
-  }
+  removeImage(project.image);
 
   await destroyProject(id);
 }

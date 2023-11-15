@@ -1,6 +1,6 @@
 const { checkSchema } = require("express-validator");
 
-const userPostValidateSchema = checkSchema({
+const registerValidateSchema = checkSchema({
   name: {
     exists: {
       errorMessage: 'name is required',
@@ -59,4 +59,4 @@ const loginValidateSchema = checkSchema({
   },
 })
 
-module.exports = { userPostValidateSchema, loginValidateSchema }
+module.exports = { registerValidateSchema, loginValidateSchema }

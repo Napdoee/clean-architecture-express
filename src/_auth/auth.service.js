@@ -2,27 +2,24 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 
 const {
-  findUsers,
-  findUserById,
   findUserByToken,
   findUserByName,
   findUserByEmail,
   insertUser,
   updateToken
-} = require('./user.repository');
+} = require('../_user/user.repository.js');
 const AppError = require('../utils/appError');
 
-const getAllUsers = async () => {
-  const users = await findUsers();
+const signAccessToken = (user) => {
+  const accessToken = jwt.sign({
+    _id: user.id,
+    username: user.name,
+    email: user.email
+  }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: '30m'
+  });
 
-  return users;
-}
-
-const getUserById = async (userId) => {
-  const user = await findUserById(userId);
-  if (!user) throw new AppError('user not found', 404);
-
-  return user;
+  return accessToken;
 }
 
 const createUser = async (newUserData) => {
@@ -47,18 +44,17 @@ const authLoginUser = async (email, password) => {
   const match = await bcrypt.compareSync(password, user.password);
   if (!match) throw new AppError('email or password doesn\'t match ');
 
-  const userId = user.id;
-  const userName = user.name;
-  const userEmail = user.email;
+  const accessToken = signAccessToken(user);
 
-  const accessToken = jwt.sign({ userId, userName, userEmail }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: '20s'
-  });
-  const refreshToken = jwt.sign({ userId, userName, userEmail }, process.env.REFRESH_TOKEN_SECRET, {
+  const refreshToken = jwt.sign({
+    _id: user.id,
+    username: user.name,
+    email: user.email
+  }, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: '1d'
   });
 
-  await updateToken(userId, refreshToken);
+  await updateToken(user.id, refreshToken);
 
   return {
     accessToken,
@@ -69,26 +65,19 @@ const authLoginUser = async (email, password) => {
 const authLogoutUser = async (token) => {
   const user = await findUserByToken(token);
   if (!user) throw new AppError(null, 204);
-  const userId = user.id;
 
-  await updateToken(userId, null);
+  await updateToken(user.id, null);
 }
 
 const generateUserToken = async (token) => {
   const user = await findUserByToken(token);
-  if (!user) throw new AppError("token has expired/token not found", 403);
+  if (!user) throw new AppError("token has expired/token not found", 402);
 
   return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET,
     (err, decoded) => {
       if (err) throw new AppError(err.message, 403);
 
-      const userId = user.id;
-      const userName = user.name;
-      const userEmail = user.email;
-
-      const accessToken = jwt.sign({ userId, userName, userEmail }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '20s'
-      })
+      const accessToken = signAccessToken(user);
 
       return accessToken;
     }
@@ -96,8 +85,6 @@ const generateUserToken = async (token) => {
 }
 
 module.exports = {
-  getAllUsers,
-  getUserById,
   createUser,
   authLoginUser,
   generateUserToken,
